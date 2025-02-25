@@ -40,7 +40,11 @@ export function AppSidebar() {
   }, [setOpen]);
 
   return (
-    <div onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
+    <div 
+      onMouseEnter={handleMouseEnter} 
+      onMouseLeave={handleMouseLeave}
+      className="h-full"
+    >
       <Sidebar collapsible="icon">
         <SidebarHeader className="border-b border-border p-4">
           <div className="flex items-center gap-3">
@@ -49,7 +53,7 @@ export function AppSidebar() {
                 <User className="h-5 w-5" />
               </AvatarFallback>
             </Avatar>
-            <div className="flex flex-col">
+            <div className="flex flex-col group-data-[collapsible=icon]:hidden">
               <span className="font-medium">User Name</span>
               <span className="text-xs text-muted-foreground">user@email.com</span>
             </div>
@@ -68,7 +72,9 @@ export function AppSidebar() {
                       onClick={() => navigate("/dashboard")}
                     >
                       <User className="mr-2" />
-                      Dashboard
+                      <span className="group-data-[collapsible=icon]:hidden">
+                        Dashboard
+                      </span>
                     </Button>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -83,7 +89,9 @@ export function AppSidebar() {
             onClick={handleSignOut}
           >
             <LogOut className="mr-2 h-4 w-4" />
-            Sign Out
+            <span className="group-data-[collapsible=icon]:hidden">
+              Sign Out
+            </span>
           </Button>
         </SidebarFooter>
       </Sidebar>
