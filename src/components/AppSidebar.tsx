@@ -41,7 +41,7 @@ export function AppSidebar() {
 
   return (
     <div onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
-      <Sidebar>
+      <Sidebar collapsible="icon">
         <SidebarHeader className="border-b border-border p-4">
           <div className="flex items-center gap-3">
             <Avatar>
