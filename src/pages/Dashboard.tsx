@@ -4,7 +4,7 @@ import { AppSidebar } from "@/components/AppSidebar";
 
 const Dashboard = () => {
   return (
-    <SidebarProvider defaultOpen={false}>
+    <SidebarProvider>
       <div className="min-h-screen flex w-full">
         <AppSidebar />
         <main className="flex-1 p-8">
