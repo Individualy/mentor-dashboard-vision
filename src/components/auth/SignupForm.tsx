@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { signup, checkEmailExists } from '@/lib/api';
+
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -12,9 +12,8 @@ const SignupForm = () => {
     email: "",
     password: "",
     confirmPassword: "",
-    role: "Student",
+    role: "",
   });
-  const [message, setMessage] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -22,20 +21,9 @@ const SignupForm = () => {
       toast.error("Passwords do not match!");
       return;
     }
-    try {
-      const emailExists = await checkEmailExists(formData.email);
-      if (emailExists) {
-        toast.error("Email already exists. Please use a different email.");
-        return;
-      }
-      const data = await signup(formData.email, formData.password, formData.role);
-      setMessage(data.message);
-      toast.success("Signup successful! Please check your email for verification.");
-      navigate("/login");
-    } catch (error) {
-      setMessage('Error signing up');
-      toast.error("Error signing up");
-    }
+    // TODO: Implement actual signup logic
+    toast.success("Signup successful! Please check your email for verification.");
+    navigate("/login");
   };
 
   return (
@@ -77,8 +65,8 @@ const SignupForm = () => {
             <SelectValue placeholder="Select your role" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="Teacher">Teacher</SelectItem>
-            <SelectItem value="Student">Student</SelectItem>
+            <SelectItem value="teacher">Teacher</SelectItem>
+            <SelectItem value="student">Student</SelectItem>
           </SelectContent>
         </Select>
         <Button type="submit" className="w-full bg-primary hover:bg-primary/90">
@@ -96,7 +84,6 @@ const SignupForm = () => {
           </button>
         </p>
       </div>
-      <p>{message}</p>
     </div>
   );
 };
