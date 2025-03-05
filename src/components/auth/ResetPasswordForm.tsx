@@ -1,10 +1,10 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { Eye, EyeOff } from "lucide-react";
+import axios from 'axios';
 
 const ResetPasswordForm = () => {
   const navigate = useNavigate();
@@ -13,6 +13,32 @@ const ResetPasswordForm = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isTokenValid, setIsTokenValid] = useState(false);
+
+  useEffect(() => {
+    const verifyToken = async () => {
+      try {
+        console.log(`Verifying token: ${token}`);
+        const response = await axios.get<{ valid: boolean }>(`http://localhost:5000/verify-reset-token?token=${token}`);
+        if (response.data.valid) {
+          setIsTokenValid(true);
+        } else {
+          toast.error("Invalid or expired reset token");
+          navigate("/error");
+        }
+      } catch (error) {
+        toast.error("Invalid or expired reset token");
+        navigate("/error");
+      }
+    };
+
+    if (token) {
+      verifyToken();
+    } else {
+      toast.error("Invalid reset token");
+      navigate("/error");
+    }
+  }, [token, navigate]);
 
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
@@ -25,27 +51,19 @@ const ResetPasswordForm = () => {
       toast.error("Invalid reset token");
       return;
     }
-
     if (password.length < 8) {
       toast.error("Password must be at least 8 characters long");
       return;
     }
-
     if (password !== confirmPassword) {
       toast.error("Passwords do not match");
       return;
     }
-
     setIsLoading(true);
-
     try {
-      // TODO: Implement actual password reset API call with token
-      // const response = await resetPassword(token, password);
-      
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      toast.success("Password reset successfully!");
+      console.log(`Resetting password with token: ${token}`);
+      const response = await axios.post<{ message: string }>('http://localhost:5000/reset-password', { token, password });
+      toast.success(response.data.message);
       navigate("/login");
     } catch (error) {
       console.error("Password reset failed:", error);
@@ -54,6 +72,10 @@ const ResetPasswordForm = () => {
       setIsLoading(false);
     }
   };
+
+  if (!isTokenValid) {
+    return null; // or a loading spinner
+  }
 
   return (
     <div className="w-full max-w-md p-8 bg-white rounded-lg shadow-lg animate-fadeIn">
@@ -108,15 +130,6 @@ const ResetPasswordForm = () => {
           {isLoading ? "Resetting..." : "Reset Password"}
         </Button>
       </form>
-      
-      <div className="mt-4 text-center">
-        <button
-          onClick={() => navigate("/login")}
-          className="text-sm text-gray-600 hover:text-gray-800 transition-colors"
-        >
-          Back to login
-        </button>
-      </div>
     </div>
   );
 };

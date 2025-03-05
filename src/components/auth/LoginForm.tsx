@@ -1,35 +1,37 @@
-
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { login } from '@/lib/api';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { toast } from "sonner";
 
 const LoginForm = () => {
   const navigate = useNavigate();
-  const [formData, setFormData] = useState({
-    email: "",
-    password: "",
-  });
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [message, setMessage] = useState('');
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    // TODO: Implement actual login logic
-    toast.success("Login successful!");
-    navigate("/dashboard");
+  const handleLogin = async () => {
+    try {
+      const data = await login(email, password);
+      localStorage.setItem('token', data.access_token);
+      setMessage('Login successful!');
+      navigate('/dashboard');
+    } catch (error) {
+      setMessage('Error logging in');
+    }
   };
 
   return (
     <div className="w-full max-w-md p-8 bg-white rounded-lg shadow-lg animate-fadeIn">
       <h2 className="text-2xl font-bold text-center mb-6 text-gray-800">Welcome back</h2>
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="space-y-4">
         <div>
           <Input
             type="email"
             placeholder="Email"
             className="w-full"
-            value={formData.email}
-            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
             required
           />
         </div>
@@ -38,15 +40,16 @@ const LoginForm = () => {
             type="password"
             placeholder="Password"
             className="w-full"
-            value={formData.password}
-            onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
             required
           />
         </div>
-        <Button type="submit" className="w-full bg-primary hover:bg-primary/90">
+        <Button onClick={handleLogin} className="w-full bg-primary hover:bg-primary/90">
           Sign In
         </Button>
-      </form>
+        <p>{message}</p>
+      </div>
       <div className="mt-4 text-center space-y-2">
         <button
           onClick={() => navigate("/forgot-password")}

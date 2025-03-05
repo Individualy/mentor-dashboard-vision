@@ -1,6 +1,6 @@
-
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { signup, checkEmailExists } from '@/lib/api';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -9,11 +9,13 @@ import { toast } from "sonner";
 const SignupForm = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
+    fullName: "",
     email: "",
     password: "",
     confirmPassword: "",
-    role: "",
+    role: "Student",
   });
+  const [message, setMessage] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -21,15 +23,36 @@ const SignupForm = () => {
       toast.error("Passwords do not match!");
       return;
     }
-    // TODO: Implement actual signup logic
-    toast.success("Signup successful! Please check your email for verification.");
-    navigate("/login");
+    try {
+      const emailExists = await checkEmailExists(formData.email);
+      if (emailExists) {
+        toast.error("Email already exists. Please use a different email.");
+        return;
+      }
+      const data = await signup(formData.fullName, formData.email, formData.password, formData.role);
+      setMessage(data.message);
+      toast.success("Signup successful! Please check your email for verification.");
+      navigate("/login");
+    } catch (error) {
+      setMessage('Error signing up');
+      toast.error("Error signing up");
+    }
   };
 
   return (
     <div className="w-full max-w-md p-8 bg-white rounded-lg shadow-lg animate-fadeIn">
       <h2 className="text-2xl font-bold text-center mb-6 text-gray-800">Create an account</h2>
       <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <Input
+            type="text"
+            placeholder="Full Name"
+            className="w-full"
+            value={formData.fullName}
+            onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+            required
+          />
+        </div>
         <div>
           <Input
             type="email"
@@ -65,8 +88,8 @@ const SignupForm = () => {
             <SelectValue placeholder="Select your role" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="teacher">Teacher</SelectItem>
-            <SelectItem value="student">Student</SelectItem>
+            <SelectItem value="Teacher">Teacher</SelectItem>
+            <SelectItem value="Student">Student</SelectItem>
           </SelectContent>
         </Select>
         <Button type="submit" className="w-full bg-primary hover:bg-primary/90">
@@ -84,6 +107,7 @@ const SignupForm = () => {
           </button>
         </p>
       </div>
+      <p>{message}</p>
     </div>
   );
 };

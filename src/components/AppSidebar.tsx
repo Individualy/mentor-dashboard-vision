@@ -1,4 +1,3 @@
-
 import { LogOut, User } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -15,9 +14,25 @@ import {
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { useEffect, useState } from "react";
+import axios from 'axios';
 
 export function AppSidebar() {
   const navigate = useNavigate();
+  const [user, setUser] = useState({ fullName: '', email: '' });
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const response = await axios.get('/api/user'); // Adjust the endpoint as needed
+        setUser(response.data as { fullName: string; email: string });
+      } catch (error) {
+        console.error('Failed to fetch user data:', error);
+      }
+    };
+
+    fetchUserData();
+  }, []);
 
   const handleSignOut = () => {
     navigate("/login");
@@ -33,8 +48,8 @@ export function AppSidebar() {
             </AvatarFallback>
           </Avatar>
           <div className="flex flex-col">
-            <span className="font-medium">User Name</span>
-            <span className="text-xs text-muted-foreground">user@email.com</span>
+            <span className="font-medium">{user.fullName}</span>
+            <span className="text-xs text-muted-foreground">{user.email}</span>
           </div>
         </div>
       </SidebarHeader>
