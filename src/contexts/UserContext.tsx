@@ -7,7 +7,6 @@ export interface User {
   fullName: string;
   email: string;
   role: 'Teacher' | 'Student' | 'Admin';
-  isActive?: boolean;
 }
 
 interface UserContextType {
@@ -35,17 +34,7 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const response = await axios.get('http://localhost:5000/user', {
         headers: { Authorization: `Bearer ${token}` }
       });
-      
-      // Properly type the response data to match the User interface
-      const userData: User = {
-        id: response.data.id,
-        fullName: response.data.fullName,
-        email: response.data.email,
-        role: response.data.role,
-        isActive: response.data.isActive
-      };
-      
-      setUser(userData);
+      setUser(response.data);
     } catch (error) {
       console.error('Failed to fetch user data:', error);
       // If we can't fetch the user data, we should clear the token
