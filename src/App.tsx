@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -15,6 +16,7 @@ import NotFound from "./pages/NotFound";
 import VerifyEmail from "./pages/VerifyEmail";
 import TeacherDashboard from "./components/auth/TeacherDashboard";
 import StudentDashboard from "./components/auth/StudentDashboard";
+import AuthRoute from "./components/auth/AuthRoute";
 
 const queryClient = new QueryClient();
 
@@ -54,15 +56,52 @@ const App = () => {
             </div>
           </nav>
           <Routes>
-            <Route path="/" element={<LoginPage />} />
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/signup" element={<SignupPage />} />
-            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-            <Route path="/dashboard" element={isTeacher ? <TeacherDashboard /> : <StudentDashboard />} />
+            {/* Auth routes - redirect to dashboard if already logged in */}
+            <Route path="/" element={
+              <AuthRoute authenticationRequired={false}>
+                <LoginPage />
+              </AuthRoute>
+            } />
+            <Route path="/login" element={
+              <AuthRoute authenticationRequired={false}>
+                <LoginPage />
+              </AuthRoute>
+            } />
+            <Route path="/signup" element={
+              <AuthRoute authenticationRequired={false}>
+                <SignupPage />
+              </AuthRoute>
+            } />
+            <Route path="/forgot-password" element={
+              <AuthRoute authenticationRequired={false}>
+                <ForgotPasswordPage />
+              </AuthRoute>
+            } />
+            <Route path="/reset-password" element={
+              <AuthRoute authenticationRequired={false}>
+                <ResetPasswordPage />
+              </AuthRoute>
+            } />
+            <Route path="/reset-password/:token" element={
+              <AuthRoute authenticationRequired={false}>
+                <ResetPasswordPage />
+              </AuthRoute>
+            } />
+            <Route path="/verify-email" element={
+              <AuthRoute authenticationRequired={false}>
+                <VerifyEmail />
+              </AuthRoute>
+            } />
+            
+            {/* Protected routes - require authentication */}
+            <Route path="/dashboard" element={
+              <AuthRoute authenticationRequired={true}>
+                {isTeacher ? <TeacherDashboard /> : <StudentDashboard />}
+              </AuthRoute>
+            } />
+            
+            {/* 404 route */}
             <Route path="*" element={<NotFound />} />
-            <Route path="/reset-password" element={<ResetPasswordPage />} />
-            <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
-            <Route path="/verify-email" element={<VerifyEmail />} />
           </Routes>
         </Router>
       </TooltipProvider>
