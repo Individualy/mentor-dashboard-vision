@@ -1,10 +1,9 @@
-
 import React, { useState } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
 import { Video, UserCog } from "lucide-react";
 
 import LoginPage from "./pages/LoginPage";
@@ -20,6 +19,43 @@ import AuthRoute from "./components/auth/AuthRoute";
 
 const queryClient = new QueryClient();
 
+const Navigation = ({ isTeacher, setIsTeacher }) => {
+  const location = useLocation();
+  
+  if (location.pathname !== '/dashboard') {
+    return null;
+  }
+
+  return (
+    <nav className="bg-white shadow-sm">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between h-16 items-center">
+          <div className="flex items-center">
+            <Video className="h-8 w-8 text-indigo-600" />
+            <span className="ml-2 text-xl font-semibold text-gray-900">
+              EduMeet
+            </span>
+          </div>
+          <div className="flex items-center space-x-4">
+            <button
+              onClick={() => setIsTeacher(!isTeacher)}
+              className="flex items-center space-x-2 px-4 py-2 rounded-md bg-indigo-50 hover:bg-indigo-100 transition-colors"
+            >
+              <UserCog className="h-5 w-5 text-indigo-600" />
+              <span className="text-sm font-medium text-indigo-700">
+                Switch to {isTeacher ? "Student" : "Teacher"} Mode
+              </span>
+            </button>
+            <span className="text-sm font-medium text-gray-700 bg-gray-100 px-3 py-1 rounded-full">
+              {isTeacher ? "Teacher Mode" : "Student Mode"}
+            </span>
+          </div>
+        </div>
+      </div>
+    </nav>
+  );
+};
+
 const App = () => {
   const [isTeacher, setIsTeacher] = useState(true);
 
@@ -29,32 +65,7 @@ const App = () => {
         <Toaster />
         <Sonner />
         <Router>
-          <nav className="bg-white shadow-sm">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-              <div className="flex justify-between h-16 items-center">
-                <div className="flex items-center">
-                  <Video className="h-8 w-8 text-indigo-600" />
-                  <span className="ml-2 text-xl font-semibold text-gray-900">
-                    EduMeet Dashboard
-                  </span>
-                </div>
-                <div className="flex items-center space-x-4">
-                  <button
-                    onClick={() => setIsTeacher(!isTeacher)}
-                    className="flex items-center space-x-2 px-4 py-2 rounded-md bg-indigo-50 hover:bg-indigo-100 transition-colors"
-                  >
-                    <UserCog className="h-5 w-5 text-indigo-600" />
-                    <span className="text-sm font-medium text-indigo-700">
-                      Switch to {isTeacher ? "Student" : "Teacher"} Mode
-                    </span>
-                  </button>
-                  <span className="text-sm font-medium text-gray-700 bg-gray-100 px-3 py-1 rounded-full">
-                    {isTeacher ? "Teacher Mode" : "Student Mode"}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </nav>
+          <Navigation isTeacher={isTeacher} setIsTeacher={setIsTeacher} />
           <Routes>
             {/* Auth routes - redirect to dashboard if already logged in */}
             <Route path="/" element={

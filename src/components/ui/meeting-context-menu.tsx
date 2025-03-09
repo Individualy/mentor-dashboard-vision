@@ -9,7 +9,7 @@ import {
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Toast } from "sonner";
+import { toast } from "sonner";
 
 interface MeetingContextMenuProps {
   children: React.ReactNode;
@@ -36,7 +36,7 @@ export function MeetingContextMenu({
     
     onTitleChange(meeting.id, newTitle);
     setIsEditing(false);
-    Toast.success("Meeting title updated successfully");
+    toast.success("Meeting title updated successfully");
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {

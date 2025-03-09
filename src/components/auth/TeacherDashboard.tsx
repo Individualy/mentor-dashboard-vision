@@ -1,8 +1,7 @@
-
 import React, { useState } from 'react';
 import { Video, Users, Plus } from 'lucide-react';
+import { toast } from "sonner";
 import { MeetingContextMenu } from '@/components/ui/meeting-context-menu';
-import { Toaster } from 'sonner';
 
 interface Student {
   id: string;
@@ -19,8 +18,17 @@ interface Meeting {
   link: string;
 }
 
+const handleCopyLink = async (link: string) => {
+  try {
+    await navigator.clipboard.writeText(link);
+    toast.success("Meeting link copied to clipboard");
+  } catch (err) {
+    toast.error("Failed to copy link");
+  }
+};
+
 const TeacherDashboard: React.FC = () => {
-  const [meetings, setMeetings] = useState<Meeting[]>([
+  const [meetings, setMeetings] = useState([
     {
       id: '1',
       title: 'Mathematics Class',
@@ -54,6 +62,7 @@ const TeacherDashboard: React.FC = () => {
       link: `https://meet.google.com/xyz-${Math.random().toString(36).substr(2, 8)}`,
     };
     setMeetings([...meetings, newMeeting]);
+    toast.success("Meeting created successfully");
   };
 
   const handleTitleChange = (meetingId: string, newTitle: string) => {
@@ -64,7 +73,6 @@ const TeacherDashboard: React.FC = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <Toaster position="top-right" />
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Left Column - Meeting Management */}
         <div>
@@ -97,7 +105,7 @@ const TeacherDashboard: React.FC = () => {
                       </div>
                       <button
                         className="text-indigo-600 hover:text-indigo-800"
-                        onClick={() => navigator.clipboard.writeText(meeting.link)}
+                        onClick={handleCopyLink.bind(null, meeting.link)}
                       >
                         Copy Link
                       </button>
