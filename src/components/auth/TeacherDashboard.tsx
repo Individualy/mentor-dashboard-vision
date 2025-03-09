@@ -1,5 +1,8 @@
+
 import React, { useState } from 'react';
 import { Video, Users, Plus } from 'lucide-react';
+import { MeetingContextMenu } from '@/components/ui/meeting-context-menu';
+import { Toaster } from 'sonner';
 
 interface Student {
   id: string;
@@ -8,8 +11,16 @@ interface Student {
   isVideoOn: boolean;
 }
 
+interface Meeting {
+  id: string;
+  title: string;
+  date: string;
+  time: string;
+  link: string;
+}
+
 const TeacherDashboard: React.FC = () => {
-  const [meetings, setMeetings] = useState([
+  const [meetings, setMeetings] = useState<Meeting[]>([
     {
       id: '1',
       title: 'Mathematics Class',
@@ -45,8 +56,15 @@ const TeacherDashboard: React.FC = () => {
     setMeetings([...meetings, newMeeting]);
   };
 
+  const handleTitleChange = (meetingId: string, newTitle: string) => {
+    setMeetings(meetings.map(meeting => 
+      meeting.id === meetingId ? { ...meeting, title: newTitle } : meeting
+    ));
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <Toaster position="top-right" />
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Left Column - Meeting Management */}
         <div>
@@ -64,22 +82,28 @@ const TeacherDashboard: React.FC = () => {
             
             <div className="space-y-4">
               {meetings.map((meeting) => (
-                <div key={meeting.id} className="border rounded-lg p-4">
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <h3 className="font-semibold text-gray-900">{meeting.title}</h3>
-                      <p className="text-sm text-gray-500">
-                        {meeting.date} at {meeting.time}
-                      </p>
+                <MeetingContextMenu 
+                  key={meeting.id} 
+                  meeting={meeting} 
+                  onTitleChange={handleTitleChange}
+                >
+                  <div className="border rounded-lg p-4 hover:bg-gray-50 transition-colors cursor-context-menu">
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <h3 className="font-semibold text-gray-900">{meeting.title}</h3>
+                        <p className="text-sm text-gray-500">
+                          {meeting.date} at {meeting.time}
+                        </p>
+                      </div>
+                      <button
+                        className="text-indigo-600 hover:text-indigo-800"
+                        onClick={() => navigator.clipboard.writeText(meeting.link)}
+                      >
+                        Copy Link
+                      </button>
                     </div>
-                    <button
-                      className="text-indigo-600 hover:text-indigo-800"
-                      onClick={() => navigator.clipboard.writeText(meeting.link)}
-                    >
-                      Copy Link
-                    </button>
                   </div>
-                </div>
+                </MeetingContextMenu>
               ))}
             </div>
           </div>
