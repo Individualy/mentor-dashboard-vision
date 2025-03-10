@@ -1,6 +1,5 @@
-
 import React, { useState } from 'react';
-import { Video, Users, Plus, Calendar, Clock } from 'lucide-react';
+import { Video, Users, Plus, Calendar } from 'lucide-react';
 import { toast } from "sonner";
 import { MeetingContextMenu } from '@/components/ui/meeting-context-menu';
 import axios from 'axios';
@@ -183,8 +182,7 @@ const TeacherDashboard: React.FC = () => {
                       <Label htmlFor="startTime" className="text-right">
                         Start Time
                       </Label>
-                      <div className="col-span-3 flex items-center">
-                        <Clock className="mr-2 h-4 w-4 text-gray-500" />
+                      <div className="col-span-3">
                         <Input
                           id="startTime"
                           name="startTime"
