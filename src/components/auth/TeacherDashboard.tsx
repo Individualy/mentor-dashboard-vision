@@ -197,7 +197,6 @@ const TeacherDashboard: React.FC = () => {
                         End Time
                       </Label>
                       <div className="col-span-3 flex items-center">
-                        <Clock className="mr-2 h-4 w-4 text-gray-500" />
                         <Input
                           id="endTime"
                           name="endTime"
