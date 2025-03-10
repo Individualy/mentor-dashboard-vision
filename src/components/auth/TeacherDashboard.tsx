@@ -196,7 +196,7 @@ const TeacherDashboard: React.FC = () => {
                       <Label htmlFor="endTime" className="text-right">
                         End Time
                       </Label>
-                      <div className="col-span-3 flex items-center">
+                      <div className="col-span-3">
                         <Input
                           id="endTime"
                           name="endTime"
