@@ -8,6 +8,7 @@ from config import Config
 from models import db, bcrypt
 from resources.auth import SignUp, Login, CheckEmail, VerifyEmail, ForgotPassword, VerifyResetToken, ResetPassword
 from resources.user import ChangePassword
+from resources.meetings import CreateMeeting
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -28,6 +29,7 @@ api.add_resource(VerifyEmail, '/verify-email')
 api.add_resource(ForgotPassword, '/forgot-password')
 api.add_resource(VerifyResetToken, '/verify-reset-token')
 api.add_resource(ResetPassword, '/reset-password')
+api.add_resource(CreateMeeting, '/create-meeting')
 
 if __name__ == '__main__':
     app.run(debug=True)

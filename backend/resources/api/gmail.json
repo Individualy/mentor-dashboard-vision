@@ -1,11 +1,14 @@
 {
-    "token": "ya29.a0AeXRPp7bylChkS-i2f9xjgxdlr2wTuER7wfLWDcfqbfLGdxFbuyXebi1hlyHxEBFUcjwcwGyW8yObYNfHXTyywIlqRPFxWuHcRRZfIXXeDjxCBpVaKmemFnwSAkwSEwXdh7ICuEXkR2cDBmvYz7yJjnWuVktQ6Xa0dvYRTsvaCgYKAWwSARMSFQHGX2Mi2lfduoow5oiDRptsY8qgbg0175", 
-    "refresh_token": "1//0e9kfPRe4ptPSCgYIARAAGA4SNwF-L9IrSx_yplgULmcd1L9D3mSzZJc32-Stmekh41zsdZhkztOPTBbFNAcTQfUGraQRx5YLsfI", 
-    "token_uri": "https://oauth2.googleapis.com/token", 
-    "client_id": "265546683038-dgmv33gjokkje5e6tfq27qdcv9o428re.apps.googleusercontent.com", 
-    "client_secret": "my-secret-key", 
-    "scopes": ["https://www.googleapis.com/auth/gmail.send"], 
-    "universe_domain": "googleapis.com", 
-    "account": "", 
-    "expiry": "2025-02-25T09:51:50.471689Z"
+  "token": "ya29.a0AeXRPp73pM53TxVol7kOS5OHWUIsC22m6zC9b8oBW2awVB_bNbycb6vWtkjT35LclGlnrEuS6R86XvycbQPMJD8Xq6czZyFN-aDJk_gzPNvcZEFvR8eTo6Rexh8DLErMXKXra8wQAmkyja_0Q8KKT8Mt6eltbyBusEqSpBdeaCgYKAb0SARMSFQHGX2MidMqhLov-VbkBomGRUgqvmg0175",
+  "refresh_token": "1//0e1C2-skAO9HKCgYIARAAGA4SNwF-L9IrXlWwZiDs42j4Kk7omKmZIoKVagjX226AUhcJblMM68Wiof6SfUXF51633ZxHYadEEmk",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "client_id": "265546683038-dgmv33gjokkje5e6tfq27qdcv9o428re.apps.googleusercontent.com",
+  "client_secret": "my-secret-key",
+  "scopes": [
+    "https://www.googleapis.com/auth/gmail.send",
+    "https://www.googleapis.com/auth/calendar"
+  ],
+  "universe_domain": "googleapis.com",
+  "account": "",
+  "expiry": "2025-03-10T12:08:49.412422Z"
 }

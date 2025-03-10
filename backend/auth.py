@@ -6,7 +6,8 @@ with open('./resources/api/gmail.json') as f:
     credentials_info = json.load(f)
 
 # Specify the scopes
-SCOPES = ['https://www.googleapis.com/auth/gmail.send']
+SCOPES = ['https://www.googleapis.com/auth/gmail.send', 'https://www.googleapis.com/auth/calendar']
+
 
 # Run the OAuth flow to get the credentials
 flow = InstalledAppFlow.from_client_config(credentials_info, SCOPES)

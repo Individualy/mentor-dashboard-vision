@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Video, Users, Plus } from 'lucide-react';
 import { toast } from "sonner";
 import { MeetingContextMenu } from '@/components/ui/meeting-context-menu';
+import axios from 'axios'; // Import axios
 
 interface Student {
   id: string;
@@ -16,6 +17,11 @@ interface Meeting {
   date: string;
   time: string;
   link: string;
+}
+
+// Define the type for the response data
+interface CreateMeetingResponse {
+  meet_link: string;
 }
 
 const handleCopyLink = async (link: string) => {
@@ -37,6 +43,7 @@ const TeacherDashboard: React.FC = () => {
       link: 'https://meet.google.com/abc-defg-hij',
     }
   ]);
+  const [isCreatingMeeting, setIsCreatingMeeting] = useState(false);
 
   const [students] = useState<Student[]>([
     {
@@ -53,16 +60,27 @@ const TeacherDashboard: React.FC = () => {
     },
   ]);
 
-  const createNewMeeting = () => {
-    const newMeeting = {
-      id: String(meetings.length + 1),
-      title: `Class ${meetings.length + 1}`,
-      date: new Date().toISOString().split('T')[0],
-      time: new Date().toLocaleTimeString(),
-      link: `https://meet.google.com/xyz-${Math.random().toString(36).substr(2, 8)}`,
-    };
-    setMeetings([...meetings, newMeeting]);
-    toast.success("Meeting created successfully");
+  const createNewMeeting = async () => {
+    setIsCreatingMeeting(true);
+    try {
+      const response = await axios.post<CreateMeetingResponse>('http://localhost:5000/create-meeting');
+      const meetLink = response.data.meet_link;
+
+      const newMeeting = {
+        id: String(meetings.length + 1),
+        title: `Class ${meetings.length + 1}`,
+        date: new Date().toISOString().split('T')[0],
+        time: new Date().toLocaleTimeString(),
+        link: meetLink,
+      };
+      setMeetings([...meetings, newMeeting]);
+      toast.success("Meeting created successfully");
+    } catch (error: any) {
+      console.error("Error creating meeting:", error);
+      toast.error("Failed to create meeting");
+    } finally {
+      setIsCreatingMeeting(false);
+    }
   };
 
   const handleTitleChange = (meetingId: string, newTitle: string) => {
@@ -82,6 +100,7 @@ const TeacherDashboard: React.FC = () => {
               <button
                 onClick={createNewMeeting}
                 className="flex items-center px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors"
+                disabled={isCreatingMeeting}
               >
                 <Plus className="h-5 w-5 mr-2" />
                 Create Meeting

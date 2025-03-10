@@ -8,6 +8,7 @@ flask_cors
 PyMySQL
 mysql-connector-python
 google-auth
-google-auth-oauthlib
-google-auth-httplib2
-google-api-python-client
+google-auth-oauthlib>=0.4.1,<0.5
+google-auth-httplib2==0.1.0
+google-api-python-client==2.86.0
+protobuf>=3.9.2,<3.20
