@@ -15,7 +15,7 @@ from resources.meetings import CreateMeeting
 app = Flask(__name__)
 app.config.from_object(Config)
 
-CORS(app) 
+CORS(app, resources={r"/*": {"origins": "*", "allow_headers": ["Content-Type", "Authorization"]}}, supports_credentials=True)
 
 db.init_app(app)
 bcrypt.init_app(app)
@@ -32,6 +32,7 @@ api.add_resource(ForgotPassword, '/forgot-password')
 api.add_resource(VerifyResetToken, '/verify-reset-token')
 api.add_resource(ResetPassword, '/reset-password')
 api.add_resource(CreateMeeting, '/create-meeting')
+
 # Add new resources to the API
 # api.add_resource(ClassResource, '/classes', '/classes/<int:class_id>')
 # api.add_resource(StudentClassResource, '/student-classes', '/student-classes/<int:student_class_id>')

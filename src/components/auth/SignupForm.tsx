@@ -19,25 +19,31 @@ const SignupForm = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
     if (formData.password !== formData.confirmPassword) {
       toast.error("Passwords do not match!");
       return;
     }
+  
     try {
-      const emailExists = await checkEmailExists(formData.email);
+      const emailExists = await checkEmailExists(formData.email); 
+  
       if (emailExists) {
         toast.error("Email already exists. Please use a different email.");
         return;
       }
+  
+      // Nếu email chưa tồn tại hoặc tồn tại nhưng chưa kích hoạt, tiếp tục đăng ký
       const data = await signup(formData.fullName, formData.email, formData.password, formData.role);
       setMessage(data.message);
       toast.success("Signup successful! Please check your email for verification.");
       navigate("/login");
     } catch (error) {
-      setMessage('Error signing up');
+      setMessage("Error signing up");
       toast.error("Error signing up");
     }
   };
+  
 
   return (
     <div className="w-full max-w-md p-8 bg-white rounded-lg shadow-lg animate-fadeIn">

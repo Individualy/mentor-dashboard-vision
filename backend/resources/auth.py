@@ -19,9 +19,6 @@ logging.basicConfig(level=logging.DEBUG)
 with open('./resources/api/gmail.json') as f:
     gmail_credentials = json.load(f)
 
-# Temporary storage for unverified users
-unverified_users = {}
-
 class SignUp(Resource):
     def post(self):
         data = request.get_json()
@@ -36,25 +33,35 @@ class SignUp(Resource):
             logging.debug("Invalid role")
             return {'message': 'Invalid role'}, 400
 
-        if User.query.filter_by(email=email).first():
-            logging.debug("Email already exists")
-            return {'message': 'Email already exists'}, 400
+        existing_user = User.query.filter_by(email=email).first()
 
-        verification_token = str(uuid.uuid4())
-        token_expiry = datetime.utcnow() + timedelta(minutes=10)
-
-        # Store user information temporarily
-        unverified_users[email] = {
-            'full_name': full_name,
-            'password': password,
-            'role': role,
-            'verification_token': verification_token,
-            'token_expiry': token_expiry
-        }
-
-        send_verification_email(email, verification_token)
-        logging.debug("Verification email sent")
-        return {'message': 'Verification email sent, please check your email'}, 201
+        if existing_user:
+            if existing_user.is_active:
+                logging.debug("Email already exists and is active")
+                return {'message': 'Email already exists and is active. Please use a different email.'}, 400
+            else:
+                # Overwrite the existing user
+                existing_user.full_name = full_name
+                existing_user.set_password(password)
+                existing_user.role = role
+                existing_user.verification_token = str(uuid.uuid4())
+                existing_user.token_expiry = datetime.utcnow() + timedelta(minutes=10)
+                db.session.commit()
+                send_verification_email(email, existing_user.verification_token)
+                return {'message': 'Verification email sent, please check your email'}, 201
+        else:
+            user = User(
+                full_name=full_name,
+                email=email,
+                role=role,
+            )
+            user.set_password(password)
+            user.verification_token = str(uuid.uuid4())
+            user.token_expiry = datetime.utcnow() + timedelta(minutes=10)
+            db.session.add(user)
+            db.session.commit()
+            send_verification_email(email, user.verification_token)
+            return {'message': 'Verification email sent, please check your email'}, 201
 
 class Login(Resource):
     def post(self):
@@ -74,40 +81,20 @@ class CheckEmail(Resource):
         email = data.get('email')
         user = User.query.filter_by(email=email).first()
         if user:
-            return {'exists': True}, 200
-        return {'exists': False}, 200
+            logging.debug(f"Email: {email}. \nis_active: {user.is_active}")
+            return {'exists': True, 'is_active': user.is_active}, 200
+        return {'exists': False, 'is_active': False}, 200
 
 class VerifyEmail(Resource):
     def get(self):
         token = request.args.get('token')
-        email = None
-
-        logging.debug(f"Received token: {token}")
-
-        # Find the email associated with the token
-        for key, value in unverified_users.items():
-            if value['verification_token'] == token:
-                email = key
-                break
-
-        if email:
-            logging.debug(f"Found email: {email}")
-            logging.debug(f"Token expiry: {unverified_users[email]['token_expiry']}")
-            logging.debug(f"Current time: {datetime.utcnow()}")
-
-        if email and unverified_users[email]['token_expiry'] > datetime.utcnow():
-            user_data = unverified_users.pop(email)
-            user = User(
-                full_name=user_data['full_name'],
-                email=email,
-                role=user_data['role']
-            )
-            user.set_password(user_data['password'])
+        user = User.query.filter_by(verification_token=token).first()
+        if user and user.token_expiry > datetime.utcnow():
             user.is_active = True
-            db.session.add(user)
+            user.verification_token = None
+            user.token_expiry = None
             db.session.commit()
             return {'message': 'Email verified successfully'}, 200
-
         return {'message': 'Invalid or expired token'}, 400
 
 class ForgotPassword(Resource):

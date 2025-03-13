@@ -20,8 +20,26 @@ export const signup = async (fullName: string, email: string, password: string, 
 };
 
 export const checkEmailExists = async (email: string): Promise<boolean> => {
-  const response = await axios.post<{ exists: boolean }>(`${API_URL}/check-email`, { email });
-  return response.data.exists;
+  try {
+    const response = await fetch(`${API_URL}/check-email`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    // Only return true if the email exists AND is active
+    return data.exists && data.is_active;
+  } catch (error) {
+    console.error("Error checking email existence:", error);
+    return false; // Assume email doesn't exist in case of an error
+  }
 };
 
 export const login = async (email: string, password: string): Promise<LoginResponse> => {

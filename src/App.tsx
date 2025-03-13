@@ -41,6 +41,32 @@ const Navigation = () => {
     return null;
   }
 
+  const fetchUserInfo = async () => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+  
+    try {
+      const response = await fetch("https://api.example.com/me", {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+  
+      if (!response.ok) {
+        throw new Error("Failed to fetch user data");
+      }
+  
+      const userData = await response.json();
+      localStorage.setItem("user", JSON.stringify(userData)); // Lưu user vào localStorage
+      return userData;
+    } catch (error) {
+      console.error("Error fetching user info:", error);
+      return null;
+    }
+  };
+  
   const handleSignOut = () => {
     localStorage.removeItem("user");
     localStorage.removeItem("token");
