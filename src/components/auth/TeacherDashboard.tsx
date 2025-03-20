@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Video, Users, Plus, Calendar } from 'lucide-react';
 import { toast } from "sonner";
 import { MeetingContextMenu } from '@/components/ui/meeting-context-menu';
@@ -25,16 +25,18 @@ interface Student {
 interface Meeting {
   id: string;
   title: string;
-  date: string;
-  time: string;
+  start_time: string;
+  end_time: string;
   link: string;
-  startTime?: string;
-  endTime?: string;
+  duration: string;
+  class_id: number;
 }
 
 // Define the type for the response data
 interface CreateMeetingResponse {
   meet_link: string;
+  html_link?: string;
+  event_id?: string;
 }
 
 const handleCopyLink = async (link: string) => {
@@ -47,21 +49,13 @@ const handleCopyLink = async (link: string) => {
 };
 
 const TeacherDashboard: React.FC = () => {
-  const [meetings, setMeetings] = useState<Meeting[]>([
-    {
-      id: '1',
-      title: 'Mathematics Class',
-      date: '2024-03-20',
-      time: '10:00 AM',
-      link: 'https://meet.google.com/abc-defg-hij',
-      startTime: '10:00',
-      endTime: '11:00',
-    }
-  ]);
+  
   const [isCreatingMeeting, setIsCreatingMeeting] = useState(false);
+  const [meetings, setMeetings] = useState<Meeting[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [newMeetingData, setNewMeetingData] = useState({
     title: '',
+    date: '',
     startTime: '',
     endTime: '',
   });
@@ -81,9 +75,28 @@ const TeacherDashboard: React.FC = () => {
     },
   ]);
 
+  const fetchMeetings = async () => {
+    try {
+      const response = await fetch("http://localhost:5000/get-meetings");
+      const data = await response.json();
+      setMeetings(data);
+    } catch (error) {
+      console.error("Error fetching meetings:", error);
+      toast.error("Failed to fetch meetings");
+    }
+  };
+
+  useEffect(() => {
+    fetchMeetings();
+    // Set up polling every second
+    const interval = setInterval(fetchMeetings, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
   const resetForm = () => {
     setNewMeetingData({
       title: '',
+      date: '',
       startTime: '',
       endTime: '',
     });
@@ -105,32 +118,28 @@ const TeacherDashboard: React.FC = () => {
 
     setIsCreatingMeeting(true);
     try {
-      const response = await axios.post<CreateMeetingResponse>('http://localhost:5000/create-meeting');
-      const meetLink = response.data.meet_link;
+      const today = new Date().toLocaleDateString('en-CA');
+      const startTime = `${today} ${newMeetingData.startTime}:00`;
+      const endTime = `${today} ${newMeetingData.endTime}:00`;
 
-      // Format time for display
-      const startDateTime = new Date();
-      startDateTime.setHours(parseInt(newMeetingData.startTime.split(':')[0]), parseInt(newMeetingData.startTime.split(':')[1]));
-
-      const formattedStartTime = startDateTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-      
-      const newMeeting: Meeting = {
-        id: String(meetings.length + 1),
+      const response = await axios.post<CreateMeetingResponse>('http://localhost:5000/create-meeting', {
         title: newMeetingData.title,
-        date: new Date().toISOString().split('T')[0],
-        time: formattedStartTime,
-        link: meetLink,
-        startTime: newMeetingData.startTime,
-        endTime: newMeetingData.endTime,
-      };
-      
-      setMeetings([...meetings, newMeeting]);
-      toast.success("Meeting created successfully");
-      resetForm();
-      setIsDialogOpen(false);
+        start_time: startTime,
+        end_time: endTime,
+        class_id: 1
+      });
+
+      if (response.data.meet_link) {
+        toast.success("Meeting created successfully");
+        resetForm();
+        setIsDialogOpen(false);
+        fetchMeetings(); // Refresh meetings list
+      } else {
+        throw new Error('Failed to create meeting');
+      }
     } catch (error: any) {
       console.error("Error creating meeting:", error);
-      toast.error("Failed to create meeting");
+      toast.error(error.response?.data?.error || "Failed to create meeting");
     } finally {
       setIsCreatingMeeting(false);
     }
@@ -232,18 +241,16 @@ const TeacherDashboard: React.FC = () => {
                   meeting={meeting} 
                   onTitleChange={handleTitleChange}
                 >
-                  <div className="border rounded-lg p-4 hover:bg-gray-50 transition-colors cursor-context-menu">
+                  <div className="border rounded-lg p-4 hover:bg-gray-50 transition-colors cursor-context-menu mb-4">
                     <div className="flex justify-between items-center">
                       <div>
                         <h3 className="font-semibold text-gray-900">{meeting.title}</h3>
                         <p className="text-sm text-gray-500">
-                          {meeting.date} at {meeting.time}
+                          {new Date(meeting.start_time).toLocaleDateString()} at {new Date(meeting.start_time).toLocaleTimeString()}
                         </p>
-                        {meeting.startTime && meeting.endTime && (
-                          <p className="text-xs text-gray-400 mt-1">
-                            Duration: {meeting.startTime} - {meeting.endTime}
-                          </p>
-                        )}
+                        <p className="text-xs text-gray-400 mt-1">
+                          Duration: {meeting.duration}
+                        </p>
                       </div>
                       <button
                         className="text-indigo-600 hover:text-indigo-800"

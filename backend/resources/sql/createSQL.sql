@@ -61,3 +61,6 @@ CREATE INDEX idx_class_teacher ON Class(teacher_id);
 CREATE INDEX idx_meeting_class ON Meeting(class_id);
 
 SELECT * FROM User;
+INSERT INTO Class (id, name) VALUES (1, 'Mathematics');
+SELECT * FROM Class;
+Select * From Meeting;

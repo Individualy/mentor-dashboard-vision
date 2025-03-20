@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { login } from '@/lib/api';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { toast } from 'sonner';
 
 const LoginForm = () => {
   const navigate = useNavigate();
@@ -15,9 +16,11 @@ const LoginForm = () => {
       const data = await login(email, password);
       localStorage.setItem('token', data.access_token);
       setMessage('Login successful!');
+      toast.success('Login successful!');
       navigate('/dashboard');
     } catch (error) {
       setMessage('Error logging in');
+      toast.error('Error logging in');
     }
   };
 

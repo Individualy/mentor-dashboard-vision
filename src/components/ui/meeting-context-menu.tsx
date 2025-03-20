@@ -1,4 +1,4 @@
-
+import React from 'react';
 import { Pencil } from "lucide-react";
 import { 
   ContextMenu,
@@ -11,23 +11,27 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
-interface MeetingContextMenuProps {
-  children: React.ReactNode;
-  meeting: {
-    id: string;
-    title: string;
-    date: string;
-    time: string;
-    link: string;
-  };
-  onTitleChange: (id: string, newTitle: string) => void;
+interface Meeting {
+  id: string;
+  title: string;
+  start_time: string;
+  end_time: string;
+  link: string;
+  duration: string;
+  class_id: number;
 }
 
-export function MeetingContextMenu({ 
-  children, 
-  meeting, 
-  onTitleChange 
-}: MeetingContextMenuProps) {
+interface MeetingContextMenuProps {
+  meeting: Meeting;
+  onTitleChange: (meetingId: string, newTitle: string) => void;
+  children: React.ReactNode;
+}
+
+export const MeetingContextMenu: React.FC<MeetingContextMenuProps> = ({
+  meeting,
+  onTitleChange,
+  children
+}) => {
   const [isEditing, setIsEditing] = useState(false);
   const [newTitle, setNewTitle] = useState(meeting.title);
 
@@ -50,8 +54,10 @@ export function MeetingContextMenu({
 
   return (
     <ContextMenu>
-      <ContextMenuTrigger asChild>{children}</ContextMenuTrigger>
-      <ContextMenuContent className="w-64">
+      <ContextMenuTrigger>
+        {children}
+      </ContextMenuTrigger>
+      <ContextMenuContent>
         {!isEditing ? (
           <ContextMenuItem
             onClick={() => setIsEditing(true)}
@@ -92,4 +98,4 @@ export function MeetingContextMenu({
       </ContextMenuContent>
     </ContextMenu>
   );
-}
+};

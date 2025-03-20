@@ -1,3 +1,6 @@
+import threading
+import time 
+
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
@@ -8,9 +11,13 @@ from config import Config
 from models import db, bcrypt
 from resources.auth import SignUp, Login, CheckEmail, VerifyEmail, ForgotPassword, VerifyResetToken, ResetPassword
 from resources.user import ChangePassword
-from resources.meetings import CreateMeeting
-# from resources.classes import ClassResource
-# from resources.student_classes import StudentClassResource
+from resources.meetings import CreateMeeting, delete_expired_meetings, GetMeetings
+
+def background_task(app):
+    with app.app_context(): 
+        while True:
+            delete_expired_meetings()
+            time.sleep(1)
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -23,6 +30,9 @@ migrate = Migrate(app, db)
 api = Api(app)
 jwt = JWTManager(app)
 
+thread = threading.Thread(target=background_task, args=(app,), daemon=True)
+thread.start()
+
 api.add_resource(SignUp, '/signup')
 api.add_resource(Login, '/login')
 api.add_resource(CheckEmail, '/check-email')
@@ -32,10 +42,8 @@ api.add_resource(ForgotPassword, '/forgot-password')
 api.add_resource(VerifyResetToken, '/verify-reset-token')
 api.add_resource(ResetPassword, '/reset-password')
 api.add_resource(CreateMeeting, '/create-meeting')
+api.add_resource(GetMeetings, '/get-meetings')
 
-# Add new resources to the API
-# api.add_resource(ClassResource, '/classes', '/classes/<int:class_id>')
-# api.add_resource(StudentClassResource, '/student-classes', '/student-classes/<int:student_class_id>')
 
 if __name__ == '__main__':
     app.run(debug=True)
