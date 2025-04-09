@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { BrowserRouter as Router, Routes, Route, useLocation, useNavigate } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -15,6 +16,7 @@ import NotFound from "./pages/NotFound";
 import VerifyEmail from "./pages/VerifyEmail";
 import TeacherDashboard from "./components/auth/TeacherDashboard";
 import StudentDashboard from "./components/auth/StudentDashboard";
+import AdminDashboard from "./components/auth/AdminDashboard";
 import AuthRoute from "./components/auth/AuthRoute";
 
 const queryClient = new QueryClient();
@@ -113,18 +115,30 @@ const Navigation = () => {
 };
 
 const App = () => {
-  const [isTeacher, setIsTeacher] = useState(() => {
+  const [userRole, setUserRole] = useState(() => {
     const storedUser = localStorage.getItem("user");
     if (storedUser) {
       try {
         const parsedUser = JSON.parse(storedUser);
-        return parsedUser.role === "teacher";
+        return parsedUser.role || 'teacher';
       } catch (error) {
         console.error("Lỗi khi parse user:", error);
       }
     }
-    return true;
+    return 'teacher'; // Default role
   });
+
+  const getDashboardComponent = () => {
+    switch(userRole) {
+      case 'admin':
+        return <AdminDashboard />;
+      case 'student':
+        return <StudentDashboard />;
+      case 'teacher':
+      default:
+        return <TeacherDashboard />;
+    }
+  };
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -141,7 +155,7 @@ const App = () => {
             <Route path="/reset-password" element={<AuthRoute authenticationRequired={false}><ResetPasswordPage /></AuthRoute>} />
             <Route path="/reset-password/:token" element={<AuthRoute authenticationRequired={false}><ResetPasswordPage /></AuthRoute>} />
             <Route path="/verify-email" element={<AuthRoute authenticationRequired={false}><VerifyEmail /></AuthRoute>} />
-            <Route path="/dashboard" element={<AuthRoute authenticationRequired={true}>{isTeacher ? <TeacherDashboard /> : <StudentDashboard />}</AuthRoute>} />
+            <Route path="/dashboard" element={<AuthRoute authenticationRequired={true}>{getDashboardComponent()}</AuthRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Router>

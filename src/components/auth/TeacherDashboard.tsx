@@ -1,5 +1,6 @@
+
 import React, { useEffect, useState } from 'react';
-import { Video, Users, Plus, Calendar } from 'lucide-react';
+import { Video, Users, Plus, Calendar, Clock } from 'lucide-react';
 import { toast } from "sonner";
 import { MeetingContextMenu } from '@/components/ui/meeting-context-menu';
 import axios from 'axios';
@@ -14,6 +15,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { VideoConference } from '@/components/video/VideoConference';
 
 interface Student {
   id: string;
@@ -53,6 +55,7 @@ const TeacherDashboard: React.FC = () => {
   const [isCreatingMeeting, setIsCreatingMeeting] = useState(false);
   const [meetings, setMeetings] = useState<Meeting[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [activeMeeting, setActiveMeeting] = useState<Meeting | null>(null);
   const [newMeetingData, setNewMeetingData] = useState({
     title: '',
     date: '',
@@ -151,6 +154,24 @@ const TeacherDashboard: React.FC = () => {
     ));
   };
 
+  const joinMeeting = (meeting: Meeting) => {
+    setActiveMeeting(meeting);
+  };
+
+  const leaveMeeting = () => {
+    setActiveMeeting(null);
+  };
+
+  if (activeMeeting) {
+    return (
+      <VideoConference 
+        meeting={activeMeeting} 
+        onLeaveMeeting={leaveMeeting} 
+        role="host"
+      />
+    );
+  }
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -191,28 +212,32 @@ const TeacherDashboard: React.FC = () => {
                       <Label htmlFor="startTime" className="text-right">
                         Start Time
                       </Label>
-                      <div className="col-span-3">
+                      <div className="col-span-3 relative">
                         <Input
                           id="startTime"
                           name="startTime"
                           type="time"
                           value={newMeetingData.startTime}
                           onChange={handleInputChange}
+                          className="pr-10"
                         />
+                        <Clock className="h-4 w-4 absolute right-3 top-3 text-gray-400" />
                       </div>
                     </div>
                     <div className="grid grid-cols-4 items-center gap-4">
                       <Label htmlFor="endTime" className="text-right">
                         End Time
                       </Label>
-                      <div className="col-span-3">
+                      <div className="col-span-3 relative">
                         <Input
                           id="endTime"
                           name="endTime"
                           type="time"
                           value={newMeetingData.endTime}
                           onChange={handleInputChange}
+                          className="pr-10"
                         />
+                        <Clock className="h-4 w-4 absolute right-3 top-3 text-gray-400" />
                       </div>
                     </div>
                   </div>
@@ -252,12 +277,21 @@ const TeacherDashboard: React.FC = () => {
                           Duration: {meeting.duration}
                         </p>
                       </div>
-                      <button
-                        className="text-indigo-600 hover:text-indigo-800"
-                        onClick={handleCopyLink.bind(null, meeting.link)}
-                      >
-                        Copy Link
-                      </button>
+                      <div className="flex gap-2">
+                        <button
+                          className="text-indigo-600 hover:text-indigo-800"
+                          onClick={() => handleCopyLink(meeting.link)}
+                        >
+                          Copy Link
+                        </button>
+                        <Button 
+                          onClick={() => joinMeeting(meeting)}
+                          variant="default"
+                          size="sm"
+                        >
+                          Join
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 </MeetingContextMenu>
