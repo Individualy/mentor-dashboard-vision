@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Video, Users, Plus, Calendar, Clock } from 'lucide-react';
 import { toast } from "sonner";
@@ -15,7 +14,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { VideoConference } from '@/components/video/VideoConference';
+import VideoConference from '@/components/video/VideoConference';
 
 interface Student {
   id: string;
@@ -34,7 +33,6 @@ interface Meeting {
   class_id: number;
 }
 
-// Define the type for the response data
 interface CreateMeetingResponse {
   meet_link: string;
   html_link?: string;
@@ -91,7 +89,6 @@ const TeacherDashboard: React.FC = () => {
 
   useEffect(() => {
     fetchMeetings();
-    // Set up polling every second
     const interval = setInterval(fetchMeetings, 1000);
     return () => clearInterval(interval);
   }, []);
@@ -136,7 +133,7 @@ const TeacherDashboard: React.FC = () => {
         toast.success("Meeting created successfully");
         resetForm();
         setIsDialogOpen(false);
-        fetchMeetings(); // Refresh meetings list
+        fetchMeetings();
       } else {
         throw new Error('Failed to create meeting');
       }
@@ -175,7 +172,6 @@ const TeacherDashboard: React.FC = () => {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Left Column - Meeting Management */}
         <div>
           <div className="bg-white rounded-lg shadow p-6">
             <div className="flex justify-between items-center mb-6">
@@ -300,7 +296,6 @@ const TeacherDashboard: React.FC = () => {
           </div>
         </div>
 
-        {/* Right Column - Student Monitoring */}
         <div>
           <div className="bg-white rounded-lg shadow p-6">
             <h2 className="text-2xl font-bold text-gray-900 mb-6">

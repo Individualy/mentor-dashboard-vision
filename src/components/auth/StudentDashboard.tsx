@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { Calendar, Video, BellRing } from 'lucide-react';
 import { toast } from 'sonner';
-import { VideoConference } from '@/components/video/VideoConference';
+import VideoConference from '@/components/video/VideoConference';
 import { Button } from '@/components/ui/button';
 
 interface Meeting {
