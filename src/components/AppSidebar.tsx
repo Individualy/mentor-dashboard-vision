@@ -14,27 +14,14 @@ import {
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { useEffect, useState } from "react";
-import axios from 'axios';
+import { useUser } from "@/contexts/UserContext";
 
 export function AppSidebar() {
   const navigate = useNavigate();
-  const [user, setUser] = useState({ fullName: '', email: '' });
-
-  useEffect(() => {
-    const fetchUserData = async () => {
-      try {
-        const response = await axios.get('/api/user'); // Adjust the endpoint as needed
-        setUser(response.data as { fullName: string; email: string });
-      } catch (error) {
-        console.error('Failed to fetch user data:', error);
-      }
-    };
-
-    fetchUserData();
-  }, []);
+  const { user, logout } = useUser();
 
   const handleSignOut = () => {
+    logout();
     navigate("/login");
   };
 
@@ -48,8 +35,9 @@ export function AppSidebar() {
             </AvatarFallback>
           </Avatar>
           <div className="flex flex-col">
-            <span className="font-medium">{user.fullName}</span>
-            <span className="text-xs text-muted-foreground">{user.email}</span>
+            <span className="font-medium">{user?.full_name || 'User'}</span>
+            <span className="text-xs text-muted-foreground">{user?.email || ''}</span>
+            <span className="text-xs font-semibold text-primary">{user?.role || ''}</span>
           </div>
         </div>
       </SidebarHeader>

@@ -3,7 +3,7 @@
   "refresh_token": "1//0e1C2-skAO9HKCgYIARAAGA4SNwF-L9IrXlWwZiDs42j4Kk7omKmZIoKVagjX226AUhcJblMM68Wiof6SfUXF51633ZxHYadEEmk",
   "token_uri": "https://oauth2.googleapis.com/token",
   "client_id": "265546683038-dgmv33gjokkje5e6tfq27qdcv9o428re.apps.googleusercontent.com",
-  "client_secret": "my-secret-key",
+  "client_secret": "my-client-secret",
   "scopes": [
     "https://www.googleapis.com/auth/gmail.send",
     "https://www.googleapis.com/auth/calendar"

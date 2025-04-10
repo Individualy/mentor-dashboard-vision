@@ -1,0 +1,1 @@
+ALTER TABLE `User` ADD COLUMN `session_token` VARCHAR(64) NULL;

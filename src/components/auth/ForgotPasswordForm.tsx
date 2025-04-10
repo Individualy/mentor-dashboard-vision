@@ -4,6 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import axios from 'axios';
+import { getFrontendUrl } from '@/lib/utils';
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
 
 const ForgotPasswordForm = () => {
   const navigate = useNavigate();
@@ -15,8 +18,18 @@ const ForgotPasswordForm = () => {
     setIsLoading(true);
 
     try {
-      const response = await axios.post<{ message: string }>('http://localhost:5000/forgot-password', { email });
-      toast.success(response.data.message);
+      const response = await axios.post<{ message: string, session_token: string }>(`${API_URL}/forgot-password`, { email });
+      toast.success("Reset code sent to your email");
+      // Store session data for verification
+      const sessionData = {
+        email: email,
+        token: response.data.session_token,
+        timestamp: Date.now()
+      };
+      sessionStorage.setItem('registration_session', JSON.stringify(sessionData));
+
+      // Use full URL with current origin to ensure correct port
+      window.location.href = `${getFrontendUrl()}/verify-code?email=${email}&reset=true&session=${response.data.session_token}`;
     } catch (error) {
       console.error("Password reset request failed:", error);
       toast.error(error.response.data.message || "Failed to send reset link. Please try again.");
@@ -39,12 +52,12 @@ const ForgotPasswordForm = () => {
             required
           />
         </div>
-        <Button 
-          type="submit" 
+        <Button
+          type="submit"
           className="w-full bg-primary hover:bg-primary/90"
           disabled={isLoading}
         >
-          {isLoading ? "Sending..." : "Send Reset Link"}
+          {isLoading ? "Sending..." : "Send Reset Code"}
         </Button>
       </form>
       <div className="mt-4 text-center">

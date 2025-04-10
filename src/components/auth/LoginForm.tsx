@@ -1,24 +1,46 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { login } from '@/lib/api';
+import { useUser } from '@/contexts/UserContext';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from 'sonner';
 
 const LoginForm = () => {
   const navigate = useNavigate();
+  const { fetchUserInfo } = useUser();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [message, setMessage] = useState('');
 
   const handleLogin = async () => {
     try {
+      console.log('Attempting login with email:', email);
       const data = await login(email, password);
-      localStorage.setItem('token', data.access_token);
+      console.log('Login response:', data);
+
+      const token = data.access_token;
+      console.log('Token received:', token ? 'Token exists' : 'No token');
+
+      // Validate token before storing
+      if (!token || typeof token !== 'string' || token.trim() === '') {
+        console.error('Invalid token received from server');
+        throw new Error('Invalid token received from server');
+      }
+
+      // Store token in localStorage
+      localStorage.setItem('token', token.trim());
+
+      // Fetch user information using the context
+      console.log('Fetching user info after login...');
+      const userInfo = await fetchUserInfo();
+      console.log('User info after login:', userInfo);
+
       setMessage('Login successful!');
       toast.success('Login successful!');
       navigate('/dashboard');
     } catch (error) {
+      console.error('Login error:', error);
       setMessage('Error logging in');
       toast.error('Error logging in');
     }

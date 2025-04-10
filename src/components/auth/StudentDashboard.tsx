@@ -1,180 +1,158 @@
 
 import React, { useEffect, useState } from 'react';
-import { Calendar, Video, BellRing } from 'lucide-react';
-import { toast } from 'sonner';
-import VideoConference from '@/components/video/VideoConference';
+import { Calendar, Video, Users, Clock, Loader2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-
-interface Meeting {
-  id: string;
-  title: string;
-  start_time: string;
-  end_time: string;
-  link: string;
-  duration: string;
-  class_id: number;
-  teacher?: string;
-  status?: 'upcoming' | 'active' | 'completed';
-}
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useUser } from '@/contexts/UserContext';
+import { Meeting } from '@/lib/api';
+import { getMeetings } from '@/lib/100msService';
+import { format, parseISO, isAfter, isBefore, addMinutes } from 'date-fns';
+import { toast } from 'sonner';
 
 const StudentDashboard: React.FC = () => {
+  const navigate = useNavigate();
+  const { user, token } = useUser();
   const [meetings, setMeetings] = useState<Meeting[]>([]);
-  const [activeMeeting, setActiveMeeting] = useState<Meeting | null>(null);
-  const [showNotification, setShowNotification] = useState(false);
-  const [notificationMeeting, setNotificationMeeting] = useState<Meeting | null>(null);
-
-  const fetchMeetings = async () => {
-    try {
-      const response = await fetch("http://localhost:5000/get-meetings");
-      const data = await response.json();
-      
-      // Process meetings to add status
-      const now = new Date();
-      const processedMeetings = data.map((meeting: Meeting) => {
-        const startTime = new Date(meeting.start_time);
-        const endTime = new Date(meeting.end_time);
-        let status: 'upcoming' | 'active' | 'completed' = 'upcoming';
-        
-        if (now > endTime) {
-          status = 'completed';
-        } else if (now >= startTime && now <= endTime) {
-          status = 'active';
-          
-          // Show notification for active meetings
-          if (!notificationMeeting || notificationMeeting.id !== meeting.id) {
-            setNotificationMeeting(meeting);
-            setShowNotification(true);
-          }
-        }
-        
-        return {
-          ...meeting,
-          status,
-          teacher: 'Prof. Johnson' // Placeholder, should come from backend
-        };
-      });
-      
-      setMeetings(processedMeetings);
-    } catch (error) {
-      console.error("Error fetching meetings:", error);
-    }
-  };
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const fetchMeetings = async () => {
+      if (!token) return;
+
+      try {
+        setLoading(true);
+        // Use the 100ms service to fetch meetings
+        const meetingsData = await getMeetings(token);
+        setMeetings(meetingsData);
+      } catch (error) {
+        console.error('Error fetching meetings:', error);
+        toast.error('Failed to load meetings');
+      } finally {
+        setLoading(false);
+      }
+    };
+
     fetchMeetings();
-    // Set up polling every few seconds
-    const interval = setInterval(fetchMeetings, 10000);
-    return () => clearInterval(interval);
-  }, []);
+  }, [token]);
 
-  // Show toast notification for active meetings
-  useEffect(() => {
-    if (showNotification && notificationMeeting) {
-      toast(
-        <div className="flex flex-col">
-          <div className="font-semibold">Class Starting Now</div>
-          <div>{notificationMeeting.title}</div>
-          <Button 
-            className="mt-2" 
-            size="sm"
-            onClick={() => {
-              setActiveMeeting(notificationMeeting);
-              setShowNotification(false);
-            }}
-          >
-            Join Now
-          </Button>
-        </div>,
-        {
-          duration: 10000,
-          icon: <BellRing className="h-5 w-5 text-blue-500" />
-        }
-      );
-      setShowNotification(false);
-    }
-  }, [showNotification, notificationMeeting]);
-
-  const joinMeeting = (meeting: Meeting) => {
-    setActiveMeeting(meeting);
+  const joinMeeting = (meetingId: string) => {
+    console.log('Joining 100ms meeting room:', meetingId);
+    navigate(`/meeting-room?id=${meetingId}`);
   };
 
-  const leaveMeeting = () => {
-    setActiveMeeting(null);
+  // Helper function to determine if a meeting is active (happening now)
+  const isMeetingActive = (startTime: string, endTime: string) => {
+    const now = new Date();
+    const start = parseISO(startTime);
+    const end = parseISO(endTime);
+
+    return isAfter(now, start) && isBefore(now, end);
   };
 
-  if (activeMeeting) {
-    return (
-      <VideoConference 
-        meeting={activeMeeting} 
-        onLeaveMeeting={leaveMeeting} 
-        role="participant"
-      />
-    );
-  }
+  // Helper function to determine if a meeting is upcoming (within the next 24 hours)
+  const isMeetingUpcoming = (startTime: string) => {
+    const now = new Date();
+    const start = parseISO(startTime);
+    const tomorrow = addMinutes(now, 24 * 60); // 24 hours from now
+
+    return isAfter(start, now) && isBefore(start, tomorrow);
+  };
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="bg-white rounded-lg shadow p-6">
-        <h2 className="text-2xl font-bold text-gray-900 mb-6">Your Meetings</h2>
-        
-        <div className="space-y-4">
-          {meetings.map((meeting) => (
-            <div
-              key={meeting.id}
-              className={`border rounded-lg p-4 ${
-                meeting.status === 'active'
-                  ? 'border-green-200 bg-green-50'
-                  : meeting.status === 'upcoming'
-                  ? 'border-indigo-200 bg-indigo-50'
-                  : 'border-gray-200'
-              }`}
-            >
-              <div className="flex justify-between items-center">
-                <div className="flex items-center space-x-4">
-                  <div className="flex-shrink-0">
-                    <Video className={`h-6 w-6 ${
-                      meeting.status === 'active' ? 'text-green-600' :
-                      meeting.status === 'upcoming' ? 'text-indigo-600' : 'text-gray-400'
-                    }`} />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-gray-900">{meeting.title}</h3>
-                    <p className="text-sm text-gray-500">{meeting.teacher}</p>
-                    <div className="flex items-center mt-1 text-sm text-gray-500">
-                      <Calendar className="h-4 w-4 mr-1" />
-                      <span>{new Date(meeting.start_time).toLocaleDateString()} at {new Date(meeting.start_time).toLocaleTimeString()}</span>
-                    </div>
-                  </div>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <Card>
+          <CardHeader>
+            <CardTitle>Available Meetings</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-col space-y-4">
+              {loading ? (
+                <div className="flex justify-center items-center py-8">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                  <span className="ml-2">Loading meetings...</span>
                 </div>
-                
-                {meeting.status === 'active' && (
-                  <Button
-                    onClick={() => joinMeeting(meeting)}
-                    className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
-                  >
-                    Join Now
-                  </Button>
-                )}
-                
-                {meeting.status === 'upcoming' && (
-                  <span className="px-4 py-2 bg-indigo-100 text-indigo-800 rounded-md">
-                    Upcoming
-                  </span>
-                )}
-                
-                {meeting.status === 'completed' && (
-                  <span className="text-gray-500 text-sm">Completed</span>
-                )}
+              ) : meetings.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                  <Video className="h-12 w-12 mx-auto text-gray-400 mb-2" />
+                  <p>No meetings available</p>
+                </div>
+              ) : (
+                meetings.map(meeting => {
+                  const isActive = isMeetingActive(meeting.start_time, meeting.end_time);
+                  const isUpcoming = isMeetingUpcoming(meeting.start_time);
+
+                  return (
+                    <div
+                      key={meeting.id}
+                      className={`border rounded-lg p-4 ${isActive ? 'border-indigo-200 bg-indigo-50' : 'border-gray-200'}`}
+                    >
+                      <div className="flex justify-between items-center">
+                        <div className="flex items-center space-x-4">
+                          <div className="flex-shrink-0">
+                            <Video className={`h-6 w-6 ${isActive ? 'text-indigo-600' : 'text-gray-400'}`} />
+                          </div>
+                          <div>
+                            <h3 className="font-semibold text-gray-900">{meeting.title}</h3>
+                            <div className="flex items-center mt-1 text-sm text-gray-500">
+                              <Calendar className="h-4 w-4 mr-1" />
+                              <span>{format(parseISO(meeting.start_time), 'MMM dd, yyyy')}</span>
+                            </div>
+                            <div className="flex items-center mt-1 text-sm text-gray-500">
+                              <Clock className="h-4 w-4 mr-1" />
+                              <span>{meeting.duration}</span>
+                            </div>
+                          </div>
+                        </div>
+                        {isActive ? (
+                          <Button onClick={() => joinMeeting(meeting.id)}>
+                            Join Now
+                          </Button>
+                        ) : isUpcoming ? (
+                          <span className="px-4 py-2 bg-indigo-100 text-indigo-800 rounded-md">
+                            Upcoming
+                          </span>
+                        ) : (
+                          <span className="px-4 py-2 bg-gray-100 text-gray-800 rounded-md">
+                            Scheduled
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Student Information</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-col space-y-4">
+              <div className="flex items-center space-x-4 p-4 bg-gray-50 rounded-lg">
+                <div className="bg-primary text-primary-foreground rounded-full p-3">
+                  <Users className="h-6 w-6" />
+                </div>
+                <div>
+                  <h3 className="font-medium">{user?.full_name || 'Loading...'}</h3>
+                  <p className="text-sm text-gray-500">{user?.role || 'Loading...'}</p>
+                </div>
+              </div>
+              <div className="p-4 bg-gray-50 rounded-lg">
+                <h3 className="font-medium mb-2">Quick Links</h3>
+                <ul className="list-disc list-inside text-sm space-y-1">
+                  <li>View your assignments</li>
+                  <li>Check your grades</li>
+                  <li>Access learning resources</li>
+                </ul>
               </div>
             </div>
-          ))}
-
-          {meetings.length === 0 && (
-            <div className="text-center py-8 text-gray-500">
-              No meetings scheduled. Check back later.
-            </div>
-          )}
-        </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

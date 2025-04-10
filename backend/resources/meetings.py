@@ -1,6 +1,6 @@
 import json
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from flask import request, jsonify, current_app
 from flask_restful import Resource
 from google.oauth2.credentials import Credentials
@@ -12,13 +12,19 @@ import pytz  # Import thư viện xử lý múi giờ
 
 logging.basicConfig(level=logging.DEBUG)
 
-# Load Gmail API credentials
-with open('./resources/api/gmail.json') as f:
-    gmail_credentials = json.load(f)
+# Gmail credentials are now loaded in utils/email.py
+# For development, use dummy credentials
+gmail_credentials = {
+    'refresh_token': 'dummy_refresh_token',
+    'token_uri': 'https://oauth2.googleapis.com/token',
+    'client_id': 'dummy_client_id',
+    'client_secret': 'dummy_client_secret'
+}
+print("Warning: Using dummy Gmail credentials in meetings.py. Email sending will not work.")
 
 def delete_expired_meetings():
-    with current_app.app_context(): 
-        now = datetime.utcnow()
+    with current_app.app_context():
+        now = datetime.now(timezone.utc)
         expired_meetings = Meeting.query.filter(Meeting.end_time < now).all()
 
         if expired_meetings:
@@ -46,7 +52,7 @@ class CreateMeeting(Resource):
             print("Received end_time:", end_time_str)
 
             # Chuyển đổi từ chuỗi "YYYY-MM-DD HH:MM:SS" sang datetime với múi giờ người dùng
-            user_tz = pytz.timezone('Asia/Ho_Chi_Minh')  
+            user_tz = pytz.timezone('Asia/Ho_Chi_Minh')
             start_time = datetime.strptime(start_time_str, "%Y-%m-%d %H:%M:%S")
             end_time = datetime.strptime(end_time_str, "%Y-%m-%d %H:%M:%S")
 
@@ -58,43 +64,11 @@ class CreateMeeting(Resource):
             return jsonify({'error': 'Invalid datetime format'}), 400
 
         try:
-            creds = Credentials.from_authorized_user_info(gmail_credentials)
-            service = build('calendar', 'v3', credentials=creds)
+            # For development mode, bypass Google Calendar API
+            print("Development mode: Bypassing Google Calendar API")
 
-            event = {
-                'summary': data.get('title', 'Mentor Meeting'),
-                'description': 'A meeting created via the Mentor Dashboard!',
-                'start': {
-                    'dateTime': start_time.isoformat(),
-                    'timeZone': 'Asia/Ho_Chi_Minh',
-                },
-                'end': {
-                    'dateTime': end_time.isoformat(),
-                    'timeZone': 'Asia/Ho_Chi_Minh',
-                },
-                'conferenceData': {
-                    'createRequest': {
-                        'requestId': f"meeting-{datetime.now().timestamp()}",  # Unique request ID
-                        "conferenceSolutionKey": {
-                            "type": "hangoutsMeet"
-                        }
-                    },
-                },
-                'reminders': {
-                    'useDefault': False,
-                    'overrides': [
-                        {'method': 'email', 'minutes': 24 * 60},
-                        {'method': 'popup', 'minutes': 10},
-                    ],
-                },
-            }
-
-            event_response = service.events().insert(calendarId='primary', body=event, conferenceDataVersion=1).execute()
-            
-            # Get the meet link from the response
-            meet_link = event_response.get('hangoutLink')
-            if not meet_link:
-                return jsonify({'error': 'Failed to create Google Meet link'}), 500
+            # Generate a fake meet link
+            meet_link = f"https://meet.google.com/dev-meeting-{datetime.now().timestamp()}"
 
             # Create meeting in database
             meeting = Meeting(
@@ -107,14 +81,15 @@ class CreateMeeting(Resource):
             db.session.add(meeting)
             db.session.commit()
 
-            print(f"Event created: {event_response['htmlLink']}")
+            print(f"Meeting created with ID: {meeting.id}")
             return jsonify({
+                'id': meeting.id,  # Include the meeting ID in the response
                 'meet_link': meet_link,
-                'html_link': event_response.get('htmlLink'),
-                'event_id': event_response.get('id')
+                'html_link': f"#/meeting/{meeting.id}",
+                'event_id': str(meeting.id)
             }), 200
 
-        except HttpError as error:
+        except Exception as error:
             print(f'An error occurred: {error}')
             return jsonify({'error': str(error)}), 500
 
@@ -125,7 +100,7 @@ class GetMeetings(Resource):
         try:
             meetings = Meeting.query.all()
             meeting_list = []
-            
+
             for m in meetings:
                 # Convert to Asia/Ho_Chi_Minh timezone
                 user_tz = pytz.timezone('Asia/Ho_Chi_Minh')

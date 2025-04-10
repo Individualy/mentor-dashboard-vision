@@ -1,6 +1,7 @@
 
-import React, { useState, useEffect } from "react";
-import { BrowserRouter as Router, Routes, Route, useLocation, useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { BrowserRouter as Router, Routes, Route, useNavigate } from "react-router-dom";
+import { UserProvider, useUser } from "./contexts/UserContext";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -11,69 +12,35 @@ import LoginPage from "./pages/LoginPage";
 import SignupPage from "./pages/SignupPage";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
-import Dashboard from "./pages/Dashboard";
 import NotFound from "./pages/NotFound";
 import VerifyEmail from "./pages/VerifyEmail";
+import ResetPasswordWithCodePage from "./pages/ResetPasswordWithCodePage";
+import VerificationEmailByCode from "./pages/VerificationEmailByCode";
 import TeacherDashboard from "./components/auth/TeacherDashboard";
 import StudentDashboard from "./components/auth/StudentDashboard";
 import AdminDashboard from "./components/auth/AdminDashboard";
+import CreateMeeting from "./components/meeting/CreateMeeting";
+import MeetingRoom from "./components/meeting/MeetingRoom";
 import AuthRoute from "./components/auth/AuthRoute";
 
 const queryClient = new QueryClient();
 
-const Navigation = () => {
-  const location = useLocation();
+// Navigation component wrapped with UserProvider
+const NavigationWithUser = () => {
   const navigate = useNavigate();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [user, setUser] = useState(null);
+  const { user, logout, loading, error, fetchUserInfo } = useUser();
 
+  // Force refresh user data if not available
   useEffect(() => {
-    const storedUser = localStorage.getItem("user");
-    if (storedUser) {
-      try {
-        setUser(JSON.parse(storedUser));
-      } catch (error) {
-        console.error("Lỗi khi parse user từ localStorage:", error);
-        setUser(null);
-      }
+    if (!user && !loading) {
+      console.log('No user data available, fetching...');
+      fetchUserInfo();
     }
-  }, []);
+  }, [user, loading, fetchUserInfo]);
 
-  if (location.pathname !== "/dashboard") {
-    return null;
-  }
-
-  const fetchUserInfo = async () => {
-    const token = localStorage.getItem("token");
-    if (!token) return;
-  
-    try {
-      const response = await fetch("https://api.example.com/me", {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
-  
-      if (!response.ok) {
-        throw new Error("Failed to fetch user data");
-      }
-  
-      const userData = await response.json();
-      localStorage.setItem("user", JSON.stringify(userData)); // Lưu user vào localStorage
-      return userData;
-    } catch (error) {
-      console.error("Error fetching user info:", error);
-      return null;
-    }
-  };
-  
   const handleSignOut = () => {
-    localStorage.removeItem("user");
-    localStorage.removeItem("token");
-    document.cookie = "user=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-    setUser(null);
+    logout();
     navigate("/login");
   };
 
@@ -94,7 +61,9 @@ const Navigation = () => {
             >
               <UserCog className="h-5 w-5 text-gray-700" />
               <span className="text-sm font-medium text-gray-700">
-                {user ? `${user.name} (${user.role})` : "Loading..."}
+                {loading ? "Loading..." :
+                 error ? "Error loading user" :
+                 user ? `${user.full_name} (${user.role})` : "Not logged in"}
               </span>
             </button>
             {isDropdownOpen && (
@@ -114,50 +83,54 @@ const Navigation = () => {
   );
 };
 
+// Dashboard component that uses the user context
+const DashboardContent = () => {
+  const { user } = useUser();
+
+  // Default to teacher if no user or role
+  const role = user?.role?.toLowerCase() || 'teacher';
+
+  switch(role) {
+    case 'admin':
+      return <AdminDashboard />;
+    case 'student':
+      return <StudentDashboard />;
+    case 'teacher':
+    default:
+      return <TeacherDashboard />;
+  }
+};
+
+// Main App component
 const App = () => {
-  const [userRole, setUserRole] = useState(() => {
-    const storedUser = localStorage.getItem("user");
-    if (storedUser) {
-      try {
-        const parsedUser = JSON.parse(storedUser);
-        return parsedUser.role || 'teacher';
-      } catch (error) {
-        console.error("Lỗi khi parse user:", error);
-      }
-    }
-    return 'teacher'; // Default role
-  });
-
-  const getDashboardComponent = () => {
-    switch(userRole) {
-      case 'admin':
-        return <AdminDashboard />;
-      case 'student':
-        return <StudentDashboard />;
-      case 'teacher':
-      default:
-        return <TeacherDashboard />;
-    }
-  };
-
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <Toaster />
         <Sonner />
         <Router>
-          <Navigation />
-          <Routes>
-            <Route path="/" element={<AuthRoute authenticationRequired={false}><LoginPage /></AuthRoute>} />
-            <Route path="/login" element={<AuthRoute authenticationRequired={false}><LoginPage /></AuthRoute>} />
-            <Route path="/signup" element={<AuthRoute authenticationRequired={false}><SignupPage /></AuthRoute>} />
-            <Route path="/forgot-password" element={<AuthRoute authenticationRequired={false}><ForgotPasswordPage /></AuthRoute>} />
-            <Route path="/reset-password" element={<AuthRoute authenticationRequired={false}><ResetPasswordPage /></AuthRoute>} />
-            <Route path="/reset-password/:token" element={<AuthRoute authenticationRequired={false}><ResetPasswordPage /></AuthRoute>} />
-            <Route path="/verify-email" element={<AuthRoute authenticationRequired={false}><VerifyEmail /></AuthRoute>} />
-            <Route path="/dashboard" element={<AuthRoute authenticationRequired={true}>{getDashboardComponent()}</AuthRoute>} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+          <UserProvider>
+            <Routes>
+              <Route path="/dashboard" element={
+                <>
+                  <NavigationWithUser />
+                  <AuthRoute authenticationRequired={true}><DashboardContent /></AuthRoute>
+                </>
+              } />
+              <Route path="/" element={<AuthRoute authenticationRequired={false}><LoginPage /></AuthRoute>} />
+              <Route path="/login" element={<AuthRoute authenticationRequired={false}><LoginPage /></AuthRoute>} />
+              <Route path="/signup" element={<AuthRoute authenticationRequired={false}><SignupPage /></AuthRoute>} />
+              <Route path="/forgot-password" element={<AuthRoute authenticationRequired={false}><ForgotPasswordPage /></AuthRoute>} />
+              <Route path="/reset-password" element={<AuthRoute authenticationRequired={false}><ResetPasswordPage /></AuthRoute>} />
+              <Route path="/reset-password/:token" element={<AuthRoute authenticationRequired={false}><ResetPasswordPage /></AuthRoute>} />
+              <Route path="/verify-email" element={<AuthRoute authenticationRequired={false}><VerifyEmail /></AuthRoute>} />
+              <Route path="/verify-code" element={<AuthRoute authenticationRequired={false}><VerificationEmailByCode /></AuthRoute>} />
+              <Route path="/reset-password-with-code" element={<AuthRoute authenticationRequired={false}><ResetPasswordWithCodePage /></AuthRoute>} />
+              <Route path="/create-meeting" element={<AuthRoute authenticationRequired={true}><CreateMeeting /></AuthRoute>} />
+              <Route path="/meeting-room" element={<AuthRoute authenticationRequired={true}><MeetingRoom /></AuthRoute>} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </UserProvider>
         </Router>
       </TooltipProvider>
     </QueryClientProvider>

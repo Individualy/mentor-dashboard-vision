@@ -3,6 +3,8 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from "sonner";
 import axios from 'axios';
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
+
 const VerifyEmail = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -13,7 +15,7 @@ const VerifyEmail = () => {
       const token = searchParams.get('token');
       if (token) {
         try {
-          const response = await axios.get<{ message: string }>(`http://localhost:5000/verify-email?token=${token}`);
+          const response = await axios.get<{ message: string }>(`${API_URL}/verify-email?token=${token}`);
           setMessage(response.data.message);
           toast.success("Email verified successfully!");
           navigate("/login");

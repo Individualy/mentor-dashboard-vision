@@ -1,11 +1,8 @@
-
--- Create the database
+-- Tạo cơ sở dữ liệu
 CREATE DATABASE IF NOT EXISTS mentor_dashboard;
-
--- Use the database
 USE mentor_dashboard;
 
--- Create the User table
+-- Tạo bảng User
 CREATE TABLE User (
     id INT AUTO_INCREMENT PRIMARY KEY,
     full_name VARCHAR(120) NOT NULL,
@@ -18,7 +15,7 @@ CREATE TABLE User (
     last_email_sent DATETIME
 );
 
--- Create the Class table
+-- Tạo bảng Class
 CREATE TABLE Class (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
@@ -27,7 +24,7 @@ CREATE TABLE Class (
     FOREIGN KEY (teacher_id) REFERENCES User(id) ON DELETE CASCADE
 );
 
--- Create the Meeting table
+-- Tạo bảng Meeting
 CREATE TABLE Meeting (
     id INT AUTO_INCREMENT PRIMARY KEY,
     title VARCHAR(255) NOT NULL,
@@ -39,7 +36,7 @@ CREATE TABLE Meeting (
     CHECK (end_time > start_time)
 );
 
--- Create the StudentClass table (Many-to-Many relationship between Student and Class)
+-- Tạo bảng StudentClass (Nhiều-Nhiều giữa Sinh viên và Lớp)
 CREATE TABLE StudentClass (
     student_id INT NOT NULL,
     class_id INT NOT NULL,
@@ -49,7 +46,7 @@ CREATE TABLE StudentClass (
     FOREIGN KEY (class_id) REFERENCES Class(id) ON DELETE CASCADE
 );
 
--- Create the Emotion data table to track student emotions during meetings
+-- Tạo bảng EmotionData để theo dõi cảm xúc
 CREATE TABLE EmotionData (
     id INT AUTO_INCREMENT PRIMARY KEY,
     student_id INT NOT NULL,
@@ -61,21 +58,34 @@ CREATE TABLE EmotionData (
     FOREIGN KEY (meeting_id) REFERENCES Meeting(id) ON DELETE CASCADE
 );
 
--- Create table for meeting attendance
+-- Tạo bảng MeetingAttendance (Không dùng GENERATED AS)
 CREATE TABLE MeetingAttendance (
     id INT AUTO_INCREMENT PRIMARY KEY,
     meeting_id INT NOT NULL,
     student_id INT NOT NULL,
     join_time DATETIME,
     leave_time DATETIME,
-    duration_minutes INT GENERATED ALWAYS AS 
-        (TIMESTAMPDIFF(MINUTE, join_time, IFNULL(leave_time, CURRENT_TIMESTAMP))) STORED,
+    duration_minutes INT, -- Sẽ cập nhật qua truy vấn hoặc trigger
     FOREIGN KEY (meeting_id) REFERENCES Meeting(id) ON DELETE CASCADE,
     FOREIGN KEY (student_id) REFERENCES User(id) ON DELETE CASCADE,
     UNIQUE KEY unique_meeting_student (meeting_id, student_id)
 );
 
--- Create table for messages sent during meetings
+-- Tạo trigger để tính duration_minutes nếu cần
+DELIMITER $$
+
+CREATE TRIGGER before_insert_meeting_attendance
+BEFORE INSERT ON MeetingAttendance
+FOR EACH ROW
+BEGIN
+    IF NEW.leave_time IS NOT NULL THEN
+        SET NEW.duration_minutes = TIMESTAMPDIFF(MINUTE, NEW.join_time, NEW.leave_time);
+    END IF;
+END$$
+
+DELIMITER ;
+
+-- Tạo bảng MeetingChat (tin nhắn trong cuộc họp)
 CREATE TABLE MeetingChat (
     id INT AUTO_INCREMENT PRIMARY KEY,
     meeting_id INT NOT NULL,
@@ -89,7 +99,7 @@ CREATE TABLE MeetingChat (
     FOREIGN KEY (recipient_id) REFERENCES User(id) ON DELETE SET NULL
 );
 
--- Create indexes for faster queries
+-- Tạo các index để tối ưu truy vấn
 CREATE INDEX idx_user_email ON User(email);
 CREATE INDEX idx_user_role ON User(role);
 CREATE INDEX idx_class_teacher ON Class(teacher_id);
@@ -99,36 +109,3 @@ CREATE INDEX idx_emotion_student ON EmotionData(student_id);
 CREATE INDEX idx_emotion_meeting ON EmotionData(meeting_id);
 CREATE INDEX idx_attendance_meeting ON MeetingAttendance(meeting_id);
 CREATE INDEX idx_attendance_student ON MeetingAttendance(student_id);
-
--- Insert sample data for testing
--- Insert admin user
-INSERT INTO User (full_name, email, password, role, is_active) 
-VALUES ('Admin User', 'admin@example.com', '$2b$12$1tJQ1pamVGlSvrKjJT7TmuQl4/uEnDGfR0l9IzX1vi1.OoZ1pJBCa', 'admin', TRUE);
-
--- Insert teacher user
-INSERT INTO User (full_name, email, password, role, is_active) 
-VALUES ('Teacher User', 'teacher@example.com', '$2b$12$1tJQ1pamVGlSvrKjJT7TmuQl4/uEnDGfR0l9IzX1vi1.OoZ1pJBCa', 'teacher', TRUE);
-
--- Insert student user
-INSERT INTO User (full_name, email, password, role, is_active) 
-VALUES ('Student User', 'student@example.com', '$2b$12$1tJQ1pamVGlSvrKjJT7TmuQl4/uEnDGfR0l9IzX1vi1.OoZ1pJBCa', 'student', TRUE);
-
--- Insert sample class
-INSERT INTO Class (name, description, teacher_id) 
-VALUES ('Mathematics', 'Advanced calculus and algebra', 2);
-
--- Insert sample meeting
-INSERT INTO Meeting (title, start_time, end_time, link, class_id)
-VALUES ('Calculus Introduction', 
-        DATE_ADD(NOW(), INTERVAL 1 DAY), 
-        DATE_ADD(NOW(), INTERVAL 1 DAY) + INTERVAL 1 HOUR, 
-        'https://meet.google.com/sample-link', 
-        1);
-
--- Enroll student in class
-INSERT INTO StudentClass (student_id, class_id)
-VALUES (3, 1);
-
--- Sample emotion data
-INSERT INTO EmotionData (student_id, meeting_id, emotion_type, notes)
-VALUES (3, 1, 'engaged', 'Student was actively participating');

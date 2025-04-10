@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
+import { getFrontendUrl } from '@/lib/utils';
 
 const SignupForm = () => {
   const navigate = useNavigate();
@@ -19,31 +20,40 @@ const SignupForm = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (formData.password !== formData.confirmPassword) {
       toast.error("Passwords do not match!");
       return;
     }
-  
+
     try {
-      const emailExists = await checkEmailExists(formData.email); 
-  
+      const emailExists = await checkEmailExists(formData.email);
+
       if (emailExists) {
         toast.error("Email already exists. Please use a different email.");
         return;
       }
-  
+
       // Nếu email chưa tồn tại hoặc tồn tại nhưng chưa kích hoạt, tiếp tục đăng ký
       const data = await signup(formData.fullName, formData.email, formData.password, formData.role);
       setMessage(data.message);
-      toast.success("Signup successful! Please check your email for verification.");
-      navigate("/login");
+      toast.success("Signup successful! Please enter the verification code sent to your email.");
+      // Store session data for verification
+      const sessionData = {
+        email: formData.email,
+        token: data.session_token,
+        timestamp: Date.now()
+      };
+      sessionStorage.setItem('registration_session', JSON.stringify(sessionData));
+
+      // Use full URL with current origin to ensure correct port
+      window.location.href = `${getFrontendUrl()}/verify-code?email=${formData.email}&session=${data.session_token}`;
     } catch (error) {
       setMessage("Error signing up");
       toast.error("Error signing up");
     }
   };
-  
+
 
   return (
     <div className="w-full max-w-md p-8 bg-white rounded-lg shadow-lg animate-fadeIn">

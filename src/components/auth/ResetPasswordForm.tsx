@@ -6,6 +6,8 @@ import { toast } from "sonner";
 import { Eye, EyeOff } from "lucide-react";
 import axios from 'axios';
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
+
 const ResetPasswordForm = () => {
   const navigate = useNavigate();
   const { token } = useParams();
@@ -19,7 +21,7 @@ const ResetPasswordForm = () => {
     const verifyToken = async () => {
       try {
         console.log(`Verifying token: ${token}`);
-        const response = await axios.get<{ valid: boolean }>(`http://localhost:5000/verify-reset-token?token=${token}`);
+        const response = await axios.get<{ valid: boolean }>(`${API_URL}/verify-reset-token?token=${token}`);
         if (response.data.valid) {
           setIsTokenValid(true);
         } else {
@@ -46,7 +48,7 @@ const ResetPasswordForm = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!token) {
       toast.error("Invalid reset token");
       return;
@@ -62,7 +64,7 @@ const ResetPasswordForm = () => {
     setIsLoading(true);
     try {
       console.log(`Resetting password with token: ${token}`);
-      const response = await axios.post<{ message: string }>('http://localhost:5000/reset-password', { token, password });
+      const response = await axios.post<{ message: string }>(`${API_URL}/reset-password`, { token, password });
       toast.success(response.data.message);
       navigate("/login");
     } catch (error) {
@@ -82,7 +84,7 @@ const ResetPasswordForm = () => {
       <h2 className="text-2xl font-bold text-center mb-6 text-gray-800">
         Reset Your Password
       </h2>
-      
+
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="relative">
           <Input
@@ -102,7 +104,7 @@ const ResetPasswordForm = () => {
             {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
           </button>
         </div>
-        
+
         <div className="relative">
           <Input
             type={showPassword ? "text" : "password"}
@@ -121,9 +123,9 @@ const ResetPasswordForm = () => {
             {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
           </button>
         </div>
-        
-        <Button 
-          type="submit" 
+
+        <Button
+          type="submit"
           className="w-full bg-primary hover:bg-primary/90"
           disabled={isLoading}
         >
